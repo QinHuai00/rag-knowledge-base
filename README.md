@@ -33,6 +33,9 @@
 环境：Windows / Linux / macOS + Python 3.10+（开发环境 3.14）。在项目根目录执行：
 
 ```bash
+git clone https://github.com/QinHuai00/rag-knowledge-base.git
+cd rag-knowledge-base
+
 # 1) 入库：解析 data/raw 下 3 份示例文档
 python -m app.cli ingest --rebuild
 
@@ -71,7 +74,7 @@ python -m app.cli eval
 ## 接真实模型（改配置，不改代码）
 
 ```bash
-# 1) 装依赖（建议虚拟环境；本仓库同级的 .venv 已装好可复用）
+# 1) 装依赖（建议用 venv/conda 隔离环境）
 pip install openai python-dotenv numpy python-docx pypdf
 # 需要 HTTP 服务再加：pip install fastapi "uvicorn[standard]" python-multipart
 
@@ -118,7 +121,7 @@ flowchart LR
 ## 目录
 
 ```
-rag-kb/
+rag-knowledge-base/
 ├─ app/
 │  ├─ config.py       # 参数、模型名、两套阈值、可选依赖探测
 │  ├─ llm.py          # Provider：在线 OpenAI 兼容 / 离线哈希向量 + 抽取式
@@ -135,9 +138,11 @@ rag-kb/
 ├─ data/index/        # 向量库产物（.gitignore）
 ├─ eval/              # qa_set.jsonl / run_eval.py / calibrate.py
 ├─ tests/             # 19 个 unittest 用例
+├─ docs/roadmap.md    # 优化路线（V2 父子块 → V7 工程化）
 ├─ requirements.txt   # 真实模式依赖（全部可选）
-├─ .env.example
-└─ README.md
+├─ .env.example / .gitignore / .editorconfig
+├─ .github/workflows/tests.yml  # CI：无依赖跑单测
+├─ LICENSE / README.md
 ```
 
 ## 评测：数字是怎么来的
