@@ -1,0 +1,24 @@
+{"q": "试用期多久？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["3个月"]}
+{"q": "转正需要什么条件？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["C档及以上", "转正申请表"]}
+{"q": "试用期可以提前转正吗？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["2个月", "提前转正申请"]}
+{"q": "转正申请要提前多久提交？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["10个工作日"]}
+{"q": "年假有几天？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["5天", "10天", "15天"]}
+{"q": "年假怎么申请？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["提前3个工作日", "HR-2024-11"]}
+{"q": "上班时间是几点到几点？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["9:00-18:00", "弹性打卡"]}
+{"q": "迟到怎么处理？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["每月3次", "30分钟"]}
+{"q": "病假需要提供什么材料？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["二级以上医院"]}
+{"q": "报销要在多少天内提交？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["30个自然日"]}
+{"q": "报销需要哪些材料？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["增值税发票", "费用审批单", "行程单"]}
+{"q": "一线城市住宿费报销标准是多少？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["500元"]}
+{"q": "业务招待人均标准是多少？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["150元"]}
+{"q": "报销款多久到账？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["5个工作日"]}
+{"q": "跨年度费用什么时候截止？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["12月31日"]}
+{"q": "VPN 地址是什么？", "answerable": true, "gold_source": "IT服务指南.md", "gold_points": ["vpn.example.com"]}
+{"q": "密码多久要更换一次？", "answerable": true, "gold_source": "IT服务指南.md", "gold_points": ["90天"]}
+{"q": "电脑用多久可以申请更换？", "answerable": true, "gold_source": "IT服务指南.md", "gold_points": ["3年"]}
+{"q": "故障报修的响应时间是多少？", "answerable": true, "gold_source": "IT服务指南.md", "gold_points": ["4小时", "1小时"]}
+{"q": "离职要交还哪些东西？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["工牌", "电脑", "门禁卡"]}
+{"q": "公司股票期权怎么分配？", "answerable": false, "gold_source": null, "gold_points": []}
+{"q": "年会在哪里举办？", "answerable": false, "gold_source": null, "gold_points": []}
+{"q": "员工可以带宠物上班吗？", "answerable": false, "gold_source": null, "gold_points": []}
+{"q": "婚假有几天？", "answerable": false, "gold_source": null, "gold_points": []}
