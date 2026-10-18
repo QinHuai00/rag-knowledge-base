@@ -1,0 +1,17 @@
+# 真实模型模式所需的依赖；不装也能跑离线模式（离线只用标准库 + numpy 可选）
+openai>=1.30
+python-dotenv>=1.0
+numpy>=1.26
+
+# 文档解析（按需）
+python-docx>=1.1
+pypdf>=4.0
+
+# HTTP 服务（可选）
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+
+# 前端（可选）
+streamlit>=1.36
+requests>=2.31
