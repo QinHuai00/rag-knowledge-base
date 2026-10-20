@@ -1,24 +1,53 @@
-{"q": "试用期多久？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["3个月"]}
-{"q": "转正需要什么条件？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["C档及以上", "转正申请表"]}
-{"q": "试用期可以提前转正吗？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["2个月", "提前转正申请"]}
-{"q": "转正申请要提前多久提交？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["10个工作日"]}
-{"q": "年假有几天？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["5天", "10天", "15天"]}
-{"q": "年假怎么申请？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["提前3个工作日", "HR-2024-11"]}
-{"q": "上班时间是几点到几点？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["9:00-18:00", "弹性打卡"]}
-{"q": "迟到怎么处理？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["每月3次", "30分钟"]}
-{"q": "病假需要提供什么材料？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["二级以上医院"]}
-{"q": "报销要在多少天内提交？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["30个自然日"]}
-{"q": "报销需要哪些材料？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["增值税发票", "费用审批单", "行程单"]}
-{"q": "一线城市住宿费报销标准是多少？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["500元"]}
-{"q": "业务招待人均标准是多少？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["150元"]}
-{"q": "报销款多久到账？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["5个工作日"]}
-{"q": "跨年度费用什么时候截止？", "answerable": true, "gold_source": "报销制度.md", "gold_points": ["12月31日"]}
-{"q": "VPN 地址是什么？", "answerable": true, "gold_source": "IT服务指南.md", "gold_points": ["vpn.example.com"]}
-{"q": "密码多久要更换一次？", "answerable": true, "gold_source": "IT服务指南.md", "gold_points": ["90天"]}
-{"q": "电脑用多久可以申请更换？", "answerable": true, "gold_source": "IT服务指南.md", "gold_points": ["3年"]}
-{"q": "故障报修的响应时间是多少？", "answerable": true, "gold_source": "IT服务指南.md", "gold_points": ["4小时", "1小时"]}
-{"q": "离职要交还哪些东西？", "answerable": true, "gold_source": "员工手册.md", "gold_points": ["工牌", "电脑", "门禁卡"]}
-{"q": "公司股票期权怎么分配？", "answerable": false, "gold_source": null, "gold_points": []}
-{"q": "年会在哪里举办？", "answerable": false, "gold_source": null, "gold_points": []}
-{"q": "员工可以带宠物上班吗？", "answerable": false, "gold_source": null, "gold_points": []}
-{"q": "婚假有几天？", "answerable": false, "gold_source": null, "gold_points": []}
+{"q": "试用期多久？", "answerable": true, "category": "number", "gold_source": "员工手册.md", "gold_section": "1.2 试用期与转正", "gold_points": ["3个月"]}
+{"q": "转正需要什么条件？", "answerable": true, "category": "basic", "gold_source": "员工手册.md", "gold_section": "1.2 试用期与转正", "gold_points": ["C档及以上", "转正申请表"]}
+{"q": "试用期可以提前转正吗？", "answerable": true, "category": "basic", "gold_source": "员工手册.md", "gold_section": "1.2 试用期与转正", "gold_points": ["2个月"]}
+{"q": "转正申请要提前多久提交？", "answerable": true, "category": "number", "gold_source": "员工手册.md", "gold_section": "1.2 试用期与转正", "gold_points": ["10个工作日"]}
+{"q": "年假有几天？", "answerable": true, "category": "number", "gold_source": "员工手册.md", "gold_section": "1.4 年假制度", "gold_points": ["5天", "10天", "15天"]}
+{"q": "年假怎么申请？", "answerable": true, "category": "basic", "gold_source": "员工手册.md", "gold_section": "1.4 年假制度", "gold_points": ["提前3个工作日"]}
+{"q": "上班时间是几点到几点？", "answerable": true, "category": "number", "gold_source": "员工手册.md", "gold_section": "1.3 考勤管理", "gold_points": ["9:00", "18:00", "弹性打卡"]}
+{"q": "迟到怎么处理？", "answerable": true, "category": "basic", "gold_source": "员工手册.md", "gold_section": "1.3 考勤管理", "gold_points": ["3次", "30分钟"]}
+{"q": "病假需要提供什么材料？", "answerable": true, "category": "basic", "gold_source": "员工手册.md", "gold_section": "1.5 病假与事假", "gold_points": ["二级以上医院"]}
+{"q": "事假一年最多多少天？", "answerable": true, "category": "number", "gold_source": "员工手册.md", "gold_section": "1.5 病假与事假", "gold_points": ["10天"]}
+{"q": "入职当天要交什么材料？", "answerable": true, "category": "basic", "gold_source": "员工手册.md", "gold_section": "1.1 入职材料", "gold_points": ["身份证复印件", "学历学位证书", "离职证明"]}
+{"q": "发薪日是哪天？", "answerable": true, "category": "number", "gold_source": "员工手册.md", "gold_section": "2.1 发薪日", "gold_points": ["每月10日"]}
+{"q": "加班后调休要在多久内用完？", "answerable": true, "category": "number", "gold_source": "员工手册.md", "gold_section": "2.2 加班与调休", "gold_points": ["6个月"]}
+{"q": "保密义务在离职后还有效吗？", "answerable": true, "category": "basic", "gold_source": "员工手册.md", "gold_section": "3.2 保密要求", "gold_points": ["2年"]}
+{"q": "离职要提前多久申请？", "answerable": true, "category": "number", "gold_source": "员工手册.md", "gold_section": "3.3 离职手续", "gold_points": ["30天"]}
+{"q": "离职要交还哪些东西？", "answerable": true, "category": "basic", "gold_source": "员工手册.md", "gold_section": "3.3 离职手续", "gold_points": ["工牌", "电脑", "门禁卡"]}
+{"q": "员工手册的文档编号是什么？", "answerable": true, "category": "identifier", "gold_source": "员工手册.md", "gold_section": "员工手册（2025 版）", "gold_points": ["HR-2024-07"]}
+{"q": "转正申请表和年假申请表的表单编号分别是什么？", "answerable": true, "category": "identifier", "gold_source": "员工手册.md", "gold_section": ["1.2 试用期与转正", "1.4 年假制度"], "gold_points": ["HR-2024-07", "HR-2024-11"]}
+{"q": "报销要在多少天内提交？", "answerable": true, "category": "number", "gold_source": "报销制度.md", "gold_section": "2 报销流程", "gold_points": ["30个自然日"]}
+{"q": "报销需要哪些材料？", "answerable": true, "category": "basic", "gold_source": "报销制度.md", "gold_section": "4 报销材料", "gold_points": ["增值税发票", "行程单"]}
+{"q": "一线城市住宿费报销标准是多少？", "answerable": true, "category": "number", "gold_source": "报销制度.md", "gold_section": "3 报销标准", "gold_points": ["500元"]}
+{"q": "业务招待人均标准是多少？", "answerable": true, "category": "number", "gold_source": "报销制度.md", "gold_section": "3 报销标准", "gold_points": ["150元"]}
+{"q": "市内交通报销每天上限多少？", "answerable": true, "category": "number", "gold_source": "报销制度.md", "gold_section": "3 报销标准", "gold_points": ["100元"]}
+{"q": "差旅期间的餐费怎么补贴？", "answerable": true, "category": "number", "gold_source": "报销制度.md", "gold_section": "3 报销标准", "gold_points": ["100元"]}
+{"q": "金额超过多少钱需要部门负责人二次审批？", "answerable": true, "category": "number", "gold_source": "报销制度.md", "gold_section": "2 报销流程", "gold_points": ["5000元"]}
+{"q": "报销款多久到账？", "answerable": true, "category": "number", "gold_source": "报销制度.md", "gold_section": "6 常见问题", "gold_points": ["5个工作日"]}
+{"q": "跨年度费用什么时候截止？", "answerable": true, "category": "number", "gold_source": "报销制度.md", "gold_section": "5.1 跨年度费用", "gold_points": ["12月31日"]}
+{"q": "借款多久必须冲销？", "answerable": true, "category": "number", "gold_source": "报销制度.md", "gold_section": "5.2 借款与冲销", "gold_points": ["15个工作日"]}
+{"q": "哪些费用不予报销？", "answerable": true, "category": "basic", "gold_source": "报销制度.md", "gold_section": "5.3 不予报销的情形", "gold_points": ["礼品卡", "罚款"]}
+{"q": "发票丢失还能报销吗？", "answerable": true, "category": "basic", "gold_source": "报销制度.md", "gold_section": "6 常见问题", "gold_points": ["发票丢失证明"]}
+{"q": "报销制度的制度编号是什么？", "answerable": true, "category": "identifier", "gold_source": "报销制度.md", "gold_section": "费用报销管理制度（2025 版）", "gold_points": ["FIN-2025-02"]}
+{"q": "费用审批单的表单编号是什么？", "answerable": true, "category": "identifier", "gold_source": "报销制度.md", "gold_section": "2 报销流程", "gold_points": ["FIN-2025-02-A"]}
+{"q": "VPN 地址是什么？", "answerable": true, "category": "identifier", "gold_source": "IT服务指南.md", "gold_section": "1.2 VPN 使用", "gold_points": ["vpn.example.com"]}
+{"q": "密码多久要更换一次？", "answerable": true, "category": "number", "gold_source": "IT服务指南.md", "gold_section": "1.3 密码策略", "gold_points": ["90天"]}
+{"q": "密码长度要求多少位？", "answerable": true, "category": "number", "gold_source": "IT服务指南.md", "gold_section": "1.3 密码策略", "gold_points": ["12位"]}
+{"q": "密码输错几次会锁定账号？", "answerable": true, "category": "number", "gold_source": "IT服务指南.md", "gold_section": "1.2 VPN 使用", "gold_points": ["3次", "30分钟"]}
+{"q": "密码重置工单多久处理完成？", "answerable": true, "category": "identifier", "gold_source": "IT服务指南.md", "gold_section": "1.3 密码策略", "gold_points": ["30分钟", "IT-2025-03"]}
+{"q": "电脑用多久可以申请更换？", "answerable": true, "category": "number", "gold_source": "IT服务指南.md", "gold_section": "2.2 设备更换", "gold_points": ["3年"]}
+{"q": "新员工可以领用哪些设备？", "answerable": true, "category": "basic", "gold_source": "IT服务指南.md", "gold_section": "2.1 新员工领用", "gold_points": ["笔记本电脑", "显示器", "键鼠"]}
+{"q": "设备丢失要多长时间内报备？", "answerable": true, "category": "number", "gold_source": "IT服务指南.md", "gold_section": "2.3 设备损坏与丢失", "gold_points": ["24小时"]}
+{"q": "一般故障多久响应？", "answerable": true, "category": "number", "gold_source": "IT服务指南.md", "gold_section": "3.1 响应时效", "gold_points": ["4小时"]}
+{"q": "紧急故障多久响应？", "answerable": true, "category": "number", "gold_source": "IT服务指南.md", "gold_section": "3.1 响应时效", "gold_points": ["1小时"]}
+{"q": "公司数据分为哪几级？", "answerable": true, "category": "basic", "gold_source": "IT服务指南.md", "gold_section": "4.1 数据分级", "gold_points": ["公开", "内部", "保密", "绝密"]}
+{"q": "离职后邮箱保留多久？", "answerable": true, "category": "number", "gold_source": "IT服务指南.md", "gold_section": "4.3 离职交接", "gold_points": ["30天"]}
+{"q": "7月入职当年有几天年假，病假需要医院证明吗？", "answerable": true, "category": "multi_hop", "gold_source": "员工手册.md", "gold_section": ["1.4 年假制度", "1.5 病假与事假"], "gold_points": ["5天", "二级以上医院"]}
+{"q": "报销超过 30 天没提交怎么办，超过 90 天呢？", "answerable": true, "category": "multi_hop", "gold_source": "报销制度.md", "gold_section": "2 报销流程", "gold_points": ["书面说明", "90天"]}
+{"q": "离职时电脑和邮箱分别怎么处理？", "answerable": true, "category": "multi_hop", "gold_source": ["员工手册.md", "IT服务指南.md"], "gold_section": ["3.3 离职手续", "4.3 离职交接"], "gold_points": ["交还", "30天"]}
+{"q": "公司股票期权怎么分配？", "answerable": false, "category": "negative", "gold_source": null, "gold_section": null, "gold_points": []}
+{"q": "年会在哪里举办？", "answerable": false, "category": "negative", "gold_source": null, "gold_section": null, "gold_points": []}
+{"q": "员工可以带宠物上班吗？", "answerable": false, "category": "negative", "gold_source": null, "gold_section": null, "gold_points": []}
+{"q": "婚假有几天？", "answerable": false, "category": "negative", "gold_source": null, "gold_section": null, "gold_points": []}
+{"q": "公司有免费健身房吗？", "answerable": false, "category": "negative", "gold_source": null, "gold_section": null, "gold_points": []}
+{"q": "生育津贴怎么申领？", "answerable": false, "category": "negative", "gold_source": null, "gold_section": null, "gold_points": []}

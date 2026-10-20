@@ -10,15 +10,17 @@
 from __future__ import annotations
 
 from app import config
-from app.retriever import retrieve
+from app.retriever import Retriever
 from eval.run_eval import load_qa_set
 
 
-def calibrate(candidates: list[float] | None = None) -> list[dict]:
+def calibrate(candidates: list[float] | None = None, preset: str = "V4") -> list[dict]:
     rows = load_qa_set()
+    # 复用同一个 Retriever：BM25 索引只建一次，40 多条题扫 25 个阈值也不会卡
+    retriever = Retriever()
     scored: list[tuple[dict, float]] = []
     for row in rows:
-        result = retrieve(row["q"], min_score=0.0)
+        result = retriever.retrieve(row["q"], min_score=0.0)
         scored.append((row, result["best_score"]))
 
     answerable = [(row, score) for row, score in scored if row.get("answerable")]
