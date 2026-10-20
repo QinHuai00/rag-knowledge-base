@@ -14,6 +14,7 @@ V1 只报 Recall@5（"正确**文档**在不在 Top-5 里"）。这个口径太�
 | section_recall@K | 正确**小节**是否出现在 Top-K | 检索精度，V2/V3/V4 的主战场 |
 | section_recall@1 | Top-1 是不是正确小节 | 用户点开第一个结果就能看到答案的比例 |
 | mrr | 正确小节名次倒数的平均 | 不只看"进没进 Top-K"，还看排得靠不靠前 |
+| ndcg@K | 二元相关性的折损累计增益 | 越靠前命中越值钱，衡量"好结果排得够不够前" |
 | point_coverage | 答案**要点**被覆盖的比例 | 最终回答答全了没有（生成 + 父块完整性的综合效果） |
 | refusal_accuracy | 库里没有的问题是否拒答 | 抗幻觉 |
 | answer_rate | 库里有的问题是否被误拒 | 别把该答的题也拒了 |
@@ -86,6 +87,33 @@ def _percentile(values: list[float], pct: float) -> float:
     return round(ordered[index], 1)
 
 
+def _ndcg_at_k(ranked_sections: list[str], gold_sections: list[str], k: int) -> float:
+    """nDCG@k（二元相关性）：命中 gold 小节记 1，否则记 0。
+
+    - ``DCG = Σ rel_i / log2(i + 1)``，``i`` 从 1 开始（第 1 名除以 1，不打折）；
+    - ``IDCG`` 用 ``min(len(gold), k)`` 个 1 计算，即"理想情况下相关小节全挤在最前面"；
+    - 没有 gold（不可答题）或 k <= 0 时返回 0。
+
+    同一小节可能被多个子块命中，这里**只按首次出现计一次**：否则一个 gold 小节
+    在 Top-K 里出现两次会拿到超过 1 的 nDCG，指标就失去意义了。
+    纯评估函数，不参与任何排序，不影响检索结果。
+    """
+    if not gold_sections or k <= 0:
+        return 0.0
+    gold = set(gold_sections)
+    dcg = 0.0
+    credited: set[str] = set()
+    for position, section in enumerate(ranked_sections[:k], start=1):
+        # 同一小节可能被多个子块命中：只给首次出现计分，且保留它真实的名次位置，
+        # 否则一个 gold 小节在 Top-K 里出现两次会拿到超过 1 的 nDCG，指标失去意义。
+        if section in gold and section not in credited:
+            credited.add(section)
+            dcg += 1.0 / math.log2(position + 1)
+    ideal = min(len(gold), k)
+    idcg = sum(1.0 / math.log2(position + 1) for position in range(1, ideal + 1))
+    return dcg / idcg if idcg else 0.0
+
+
 # --------------------------------------------------------------------------
 # 主评测
 # --------------------------------------------------------------------------
@@ -108,6 +136,7 @@ def evaluate(
 
     source_hits = section_hits = top1_hits = 0
     reciprocal_ranks: list[float] = []
+    ndcg_scores: list[float] = []
     point_total = point_hit = 0
     answered = refused_correct = 0
     retrieval_ms: list[float] = []
@@ -143,11 +172,13 @@ def evaluate(
         rank = next((i + 1 for i, section in enumerate(hit_sections) if section in gold_sections), None)
 
         coverage = 0.0
+        ndcg = _ndcg_at_k(hit_sections, gold_sections, top_k)
         if row.get("answerable"):
             source_hits += int(source_found)
             section_hits += int(section_found)
             top1_hits += int(rank == 1)
             reciprocal_ranks.append(1.0 / rank if rank else 0.0)
+            ndcg_scores.append(ndcg)
             coverage = _point_coverage(row.get("gold_points") or [], reply["text"])
             points = row.get("gold_points") or []
             point_total += len(points)
@@ -168,6 +199,7 @@ def evaluate(
                 "gold_section": "/".join(gold_sections) or None,
                 "top1_section": hit_sections[0] if hit_sections else None,
                 "rank": rank,
+                "ndcg": round(ndcg, 3),
                 "best_score": result["best_score"],
                 "refused": result["low_confidence"],
                 "coverage": round(coverage, 3),
@@ -190,6 +222,7 @@ def evaluate(
         "section_recall": round(section_hits / n_answerable, 3),
         "section_recall_at_1": round(top1_hits / n_answerable, 3),
         "mrr": round(statistics.mean(reciprocal_ranks), 3) if reciprocal_ranks else 0.0,
+        f"ndcg@{top_k}": round(statistics.mean(ndcg_scores), 3) if ndcg_scores else 0.0,
         "point_coverage": round(point_hit / point_total, 3) if point_total else 0.0,
         "answer_rate": round(answered / n_answerable, 3),
         "refusal_accuracy": round(refused_correct / n_unanswerable, 3),
@@ -209,6 +242,7 @@ def evaluate(
 
 
 def _print_report(metrics: dict) -> None:
+    ndcg = metrics[f"ndcg@{metrics['top_k']}"]
     print(f"\n评测档位：{metrics['preset']}｜模式：{metrics['mode']}（阈值 {metrics['threshold']:.2f}，Top-K {metrics['top_k']}）")
     print(f"样本：{metrics['total']} 条（可答 {metrics['answerable']} / 不可答 {metrics['unanswerable']}）")
     print("| 指标 | 数值 | 说明 |")
@@ -217,6 +251,7 @@ def _print_report(metrics: dict) -> None:
     print(f"| section_recall@{metrics['top_k']} | {metrics['section_recall']:.1%} | 正确小节是否进 Top-K |")
     print(f"| section_recall@1 | {metrics['section_recall_at_1']:.1%} | Top-1 就是正确小节 |")
     print(f"| MRR | {metrics['mrr']:.3f} | 正确小节的倒数名次均值 |")
+    print(f"| nDCG@{metrics['top_k']} | {ndcg:.3f} | 越靠前命中越值钱（二元相关性） |")
     print(f"| 要点覆盖率 | {metrics['point_coverage']:.1%} | 答案覆盖了多少个标注要点 |")
     print(f"| 可回答率 | {metrics['answer_rate']:.1%} | 有答案的问题没有被误拒 |")
     print(f"| 拒答正确率 | {metrics['refusal_accuracy']:.1%} | 库外问题全部拒答 |")

@@ -95,6 +95,7 @@ def run_ablation(top_k: int = 5, write: bool = True) -> list[dict]:
         bm25 = BM25Index.from_texts(child_store.texts())
 
         stores = {"V1": v1_store, "V2": child_store, "V3": child_store, "V4": child_store}
+        ndcg_key = f"ndcg@{top_k}"
         results: list[dict] = []
         for name, desc in PRESETS:
             options = getattr(RetrievalOptions, name.lower())(top_k)
@@ -111,6 +112,7 @@ def run_ablation(top_k: int = 5, write: bool = True) -> list[dict]:
             results.append(metrics)
             print(
                 f"  {name} 完成：section_recall@{top_k}={metrics['section_recall']:.1%} "
+                f"nDCG@{top_k}={metrics[ndcg_key]:.3f} "
                 f"覆盖率={metrics['point_coverage']:.1%} P95={metrics['p95_retrieval_ms']}ms"
             )
 
@@ -125,6 +127,7 @@ def run_ablation(top_k: int = 5, write: bool = True) -> list[dict]:
 def render(results: list[dict], top_k: int) -> str:
     """生成 markdown 对比表（同时用于终端输出和落盘）。"""
     base = results[0]
+    ndcg_key = f"ndcg@{top_k}"
     lines = [
         f"# 消融实验（{datetime.now().strftime('%Y-%m-%d %H:%M')}）",
         "",
@@ -132,8 +135,8 @@ def render(results: list[dict], top_k: int) -> str:
         f"- 模式：{base['mode']}｜Top-K：{top_k}｜拒答阈值：{base['threshold']:.2f}",
         "- 语料：`data/raw` 下 3 份制度文档",
         "",
-        "| 档位 | 改动 | 小节命中率@K | 小节命中率@1 | MRR | 要点覆盖率 | 拒答正确率 | P95 检索 | 上下文均字符 |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        f"| 档位 | 改动 | 小节命中率@K | 小节命中率@1 | MRR | nDCG@{top_k} | 要点覆盖率 | 拒答正确率 | P95 检索 | 上下文均字符 |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for result in results:
         lines.append(
@@ -141,6 +144,7 @@ def render(results: list[dict], top_k: int) -> str:
             f"| {result['section_recall']:.1%} "
             f"| {result['section_recall_at_1']:.1%} "
             f"| {result['mrr']:.3f} "
+            f"| {result[ndcg_key]:.3f} "
             f"| {result['point_coverage']:.1%} "
             f"| {result['refusal_accuracy']:.1%} "
             f"| {result['p95_retrieval_ms']} ms "
@@ -151,13 +155,14 @@ def render(results: list[dict], top_k: int) -> str:
         "",
         "## 增量对比（相对上一档）",
         "",
-        "| 档位 | 小节命中率@K 变化 | 要点覆盖率 变化 | P95 检索 变化 |",
-        "| --- | --- | --- | --- |",
+        f"| 档位 | 小节命中率@K 变化 | nDCG@{top_k} 变化 | 要点覆盖率 变化 | P95 检索 变化 |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for previous, current in zip(results, results[1:]):
         lines.append(
             f"| {previous['preset']} → {current['preset']} "
             f"| {_delta(previous['section_recall'], current['section_recall'], True)} "
+            f"| {current[ndcg_key] - previous[ndcg_key]:+.3f} "
             f"| {_delta(previous['point_coverage'], current['point_coverage'], True)} "
             f"| {_delta(previous['p95_retrieval_ms'], current['p95_retrieval_ms'], False)} |"
         )
