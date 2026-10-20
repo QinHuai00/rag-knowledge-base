@@ -1,5 +1,8 @@
 * text=auto eol=lf
 
+# Windows 批处理必须保持 CRLF，否则 cmd.exe 解析会错乱
+*.bat text eol=crlf
+
 *.png binary
 *.jpg binary
 *.gif binary
