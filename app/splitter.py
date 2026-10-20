@@ -1,12 +1,18 @@
-"""切分：长文本 → 语义块（初版 V1：固定长度 + 段落/句子边界回退）。
+"""切分：长文本 → 语义块。
+
+两级切分（V2）：
+- **child（子块）**：short，用于检索。语义集中，向量不被稀释，BM25 也更容易命中；
+- **parent（父块）**：长，用于生成。命中子块后按 ``parent_id`` 回溯整节内容。
+
+为什么这么做：V1 用 600 字固定块，一个块里常混着"条件 + 流程 + 例外"三段内容。
+查询"转正条件"时块的前半段在讲试用期工资，向量被无关内容稀释；而如果把块切到 200 字，
+模型又会因为拿不到完整条款而答不全。父子块把"检索精度"和"上下文完整性"解耦。
 
 设计取舍：
 - 按段落优先拼块：句子不会被拦腰截断，答案引用更自然；
 - 段落超长时退到句子，句子仍超长才硬切；
 - overlap 以"段/句"为单位保留，不按字符硬重叠（避免切出半句话）；
-- 保留 start/end 字符偏移，后面做父子块、命中高亮时要用。
-
-初版故意不做父子块和标题感知切分——这两项是《优化过程详解》V2 的内容。
+- 保留 start/end 字符偏移，命中高亮时要用。
 """
 from __future__ import annotations
 
@@ -142,3 +148,66 @@ def split_pages(pages, file_hash: str) -> list[dict]:
                 }
             )
     return records
+
+
+# --------------------------------------------------------------------------
+# V2：父子块切分
+# --------------------------------------------------------------------------
+def split_pages_hierarchical(
+    pages,
+    file_hash: str,
+    child_size: int | None = None,
+    child_overlap: int | None = None,
+    parent_max: int | None = None,
+) -> tuple[list[dict], dict[str, dict]]:
+    """页面 → (子块记录列表, 父块字典)。
+
+    父块字典结构：``{parent_id: {"text", "source", "page", "section"}}``，
+    和子块一起写进同一个索引文件，避免再维护一套存储。
+
+    为什么父块也要再切一次：一节可能长达三千字（"报销标准"带表格），
+    整节塞进 Prompt 会挤掉别的候选，所以超过 ``parent_max`` 的节按句边界二次切分，
+    保证每个父块都是"可独立阅读的一段"。
+    """
+    child_size = child_size or config.CHILD_SIZE
+    child_overlap = child_overlap if child_overlap is not None else config.CHILD_OVERLAP
+    parent_max = parent_max or config.PARENT_MAX_CHARS
+
+    records: list[dict] = []
+    parents: dict[str, dict] = {}
+
+    for page_index, page in enumerate(pages, start=1):
+        page_no = page.page if page.page is not None else page_index
+        # 父块：整节；超长节按句边界切成若干段
+        parent_spans = [
+            (chunk.text, chunk.start, chunk.end) for chunk in split_text(page.text, size=parent_max, overlap=0)
+        ] or [(page.text, 0, len(page.text))]
+
+        for parent_index, (parent_text, p_start, p_end) in enumerate(parent_spans):
+            children = split_text(parent_text, size=child_size, overlap=child_overlap)
+            if not children:
+                # 只有标题、没有正文的"伪小节"（如 "## 2 设备申领与更换"）不登记父块，
+                # 否则索引里会堆一堆没人引用的孤儿父块
+                continue
+            parent_id = f"{file_hash}-p{page_no}-s{parent_index}"
+            parents[parent_id] = {
+                "text": parent_text,
+                "source": page.source,
+                "page": page.page,
+                "section": page.section,
+            }
+            # 子块：在父块内部再切，偏移换算回整节坐标系，方便以后做高亮
+            for chunk_index, chunk in enumerate(children):
+                records.append(
+                    {
+                        "id": f"{parent_id}-c{chunk_index}",
+                        "text": chunk.text,
+                        "source": page.source,
+                        "page": page.page,
+                        "section": page.section,
+                        "start": p_start + chunk.start,
+                        "end": p_start + chunk.end,
+                        "parent_id": parent_id,
+                    }
+                )
+    return records, parents

@@ -1,8 +1,10 @@
-"""入库：文件 → 解析 → 切分 → 向量化 → 落库。
+"""入库：文件 → 解析 → 切分（父子块）→ 向量化 → 落库。
 
-两个工程细节：
+三个工程细节：
 1) 内容哈希做 id 前缀：同名不同内容不会冲突，也能判断"这个文件改没改"；
-2) 重新上传同一文件先按 source 删旧块再写新块，避免知识库越滚越脏。
+2) 重新上传同一文件先按 source 删旧块再写新块，避免知识库越滚越脏；
+3) 父块（整节正文）和子块（检索小块）写在同一个索引文件里，
+   保证"删文件时父子块一起走"，不会留下孤儿父块。
 
 离线模式的额外一步：先在全语料上统计 IDF，再向量化。
 否则高频词（"公司""员工"）会让任何问题都显得"相关"，拒答阈值失效。
@@ -15,7 +17,7 @@ from pathlib import Path
 
 from app import config, llm
 from app.loader import SUPPORTED_SUFFIXES, load
-from app.splitter import split_pages
+from app.splitter import split_pages_hierarchical
 from app.store import VectorStore
 
 logger = logging.getLogger(__name__)
@@ -61,15 +63,16 @@ def _embed_records(records: list[dict]) -> None:
         record["vector"] = [round(float(x), 6) for x in vector]
 
 
-def _build_records(path: Path) -> list[dict]:
+def _build_records(path: Path) -> tuple[list[dict], dict[str, dict]]:
+    """解析 + 父子块切分，返回 (子块记录, 父块字典)。"""
     content_hash = file_hash(path)
     pages = load(path)
-    records = split_pages(pages, content_hash)
+    records, parents = split_pages_hierarchical(pages, content_hash)
     if not records:
         raise ValueError(f"{path.name} 切分后没有有效内容")
     for record in records:
         record["file_hash"] = content_hash
-    return records
+    return records, parents
 
 
 def ingest_file(path: str | Path, store: VectorStore | None = None, force: bool = False) -> dict:
@@ -84,12 +87,12 @@ def ingest_file(path: str | Path, store: VectorStore | None = None, force: bool 
         logger.info("内容未变化，跳过：%s", source)
         return {"file": source, "chunks": known.get("chunks", 0), "hash": content_hash, "status": "unchanged"}
 
-    records = _build_records(file_path)
+    records, parents = _build_records(file_path)
     _ensure_idf(store, [record["text"] for record in records])
     _embed_records(records)
     removed = store.remove_source(source)
-    store.add_chunks(records)
-    logger.info("入库完成：%s（%d 块，替换旧块 %d）", source, len(records), removed)
+    store.add_chunks(records, parents)
+    logger.info("入库完成：%s（%d 块 / %d 父块，替换旧块 %d）", source, len(records), len(parents), removed)
     return {"file": source, "chunks": len(records), "hash": content_hash, "status": "ingested"}
 
 
@@ -109,8 +112,8 @@ def ingest_dir(
         store.reset()
         logger.info("已清空向量库，重新入库")
 
-    result: dict = {"ingested": [], "skipped": [], "errors": [], "total_chunks": 0}
-    pending: list[tuple[Path, list[dict], str]] = []
+    result: dict = {"ingested": [], "skipped": [], "errors": [], "total_chunks": 0, "total_parents": 0}
+    pending: list[tuple[Path, list[dict], dict[str, dict], str]] = []
 
     for path in sorted(raw.iterdir()):
         if not path.is_file() or path.suffix.lower() not in SUPPORTED_SUFFIXES:
@@ -121,29 +124,30 @@ def ingest_dir(
             result["skipped"].append(path.name)
             continue
         try:
-            records = _build_records(path)
+            records, parents = _build_records(path)
         except Exception as exc:  # 单个文件失败不能中断整批
             logger.error("解析失败：%s（%s）", path.name, exc)
             result["errors"].append({"file": path.name, "error": str(exc)})
             continue
-        pending.append((path, records, content_hash))
+        pending.append((path, records, parents, content_hash))
 
     # 先统计 IDF（只在新库时），再统一向量化
-    _ensure_idf(store, [record["text"] for _, records, _ in pending for record in records])
+    _ensure_idf(store, [record["text"] for _, records, _, _ in pending for record in records])
 
-    for path, records, content_hash in pending:
+    for path, records, parents, content_hash in pending:
         try:
             _embed_records(records)
             removed = store.remove_source(path.name)
-            store.add_chunks(records)
+            store.add_chunks(records, parents)
         except Exception as exc:
             logger.error("入库失败：%s（%s）", path.name, exc)
             result["errors"].append({"file": path.name, "error": str(exc)})
             continue
-        logger.info("入库完成：%s（%d 块，替换旧块 %d）", path.name, len(records), removed)
+        logger.info("入库完成：%s（%d 块 / %d 父块，替换旧块 %d）", path.name, len(records), len(parents), removed)
         result["ingested"].append(
             {"file": path.name, "chunks": len(records), "hash": content_hash, "status": "ingested"}
         )
 
     result["total_chunks"] = store.count()
+    result["total_parents"] = len(store.parents)
     return result

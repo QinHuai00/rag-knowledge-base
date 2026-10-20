@@ -51,6 +51,37 @@ CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "600"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "80"))
 TOP_K = int(os.getenv("TOP_K", "5"))
 
+# ---------- V2 父子块（small-to-big） ----------
+# 检索用小块（child，语义集中、向量不被稀释），生成用大块（parent，上下文完整）。
+# 为什么 child 取 110：实测本语料的小节长度是 60~330 字（见 docs/roadmap.md 的实验记录），
+# 取 220 时一个子块几乎等于一整节，父子块就退化成了"什么都不做"；
+# 取 110 才能真正把"条件句"和"结论句"分开检索，再用父块把结论补回来。
+CHILD_SIZE = int(os.getenv("CHILD_SIZE", "110"))
+CHILD_OVERLAP = int(os.getenv("CHILD_OVERLAP", "20"))
+# 父块喂给生成侧的上限：父块是整节，太长的节（如"报销标准"带表格）要截断，
+# 否则在线模式 Token 成本失控、离线抽取也会被噪音带偏。
+PARENT_MAX_CHARS = int(os.getenv("PARENT_MAX_CHARS", "1200"))
+
+# ---------- V3 混合召回（BM25 + 向量，RRF 融合） ----------
+# 每路各取 CANDIDATE_K 个候选再融合，而不是各自只取 Top-K：
+# 融合的收益来自"两路召回集合的差集"，候选太少就没什么可融的。
+CANDIDATE_K = int(os.getenv("CANDIDATE_K", "20"))
+# RRF 的平滑常数：取 60 是原论文的经验值，作用是压平"第 1 名与第 2 名"的差距，
+# 让两路的排序分歧不至于被单路垄断。
+RRF_K = int(os.getenv("RRF_K", "60"))
+BM25_K1 = float(os.getenv("BM25_K1", "1.5"))   # 词频饱和速度
+BM25_B = float(os.getenv("BM25_B", "0.75"))    # 文档长度归一强度
+
+# ---------- V4 规则精排（cross-encoder 的零依赖替代） ----------
+# 精排只重排候选顺序，**不参与拒答判定**：拒答仍用向量原始分，
+# 否则每加一级优化都要重新校准一次阈值，实验就没法只改一个变量了。
+RERANK_TOP_N = int(os.getenv("RERANK_TOP_N", "20"))
+# 四个信号加权求和，权重之和为 1，方便解释"这个 0.82 分怎么来的"
+RERANK_W_COVERAGE = float(os.getenv("RERANK_W_COVERAGE", "0.45"))    # 问题词覆盖率
+RERANK_W_SECTION = float(os.getenv("RERANK_W_SECTION", "0.20"))      # 小节标题命中
+RERANK_W_PRIOR = float(os.getenv("RERANK_W_PRIOR", "0.20"))          # 融合阶段的原始名次
+RERANK_W_PROXIMITY = float(os.getenv("RERANK_W_PROXIMITY", "0.15"))  # 问题词是否聚在一起
+
 # 拒答阈值：离线哈希向量的分布与真实 BGE 完全不同，必须分开给两套阈值。
 # - 离线默认 4.2：IDF 加权点积的量级。eval/calibrate.py 实测：
 #   可回答题最低 4.66（迟到怎么处理），拒答题最高 3.86（带宠物上班）；

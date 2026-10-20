@@ -34,6 +34,7 @@ class VectorStore:
     def __init__(self, path: str | Path | None = None):
         self.path = Path(path) if path else config.INDEX_FILE
         self.items: list[dict] = []
+        self.parents: dict[str, dict] = {}
         self.scoring = "cosine"
         self.idf: dict[str, float] = {}
         self.idf_default = 1.0
@@ -47,11 +48,17 @@ class VectorStore:
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
             self.items = data.get("items", [])
+            # 老索引（V1）没有 parents 字段：此时 get_parent 返回 None，
+            # 检索会自动退化成"直接用子块文本"，不需要重建索引也能跑。
+            self.parents = data.get("parents", {}) or {}
             self.scoring = data.get("scoring", "cosine")
             self.idf = data.get("idf", {}) or {}
             self.idf_default = float(data.get("idf_default", 1.0))
             self.stop_grams = data.get("stop_grams", []) or []
-            logger.info("向量库已加载：%d 块（%s，%s 打分）", len(self.items), self.path, self.scoring)
+            logger.info(
+                "向量库已加载：%d 块 / %d 父块（%s，%s 打分）",
+                len(self.items), len(self.parents), self.path, self.scoring,
+            )
         except (json.JSONDecodeError, OSError) as exc:
             logger.error("向量库文件损坏，按空库处理：%s", exc)
             self.items = []
@@ -64,6 +71,7 @@ class VectorStore:
             "idf": self.idf,
             "idf_default": self.idf_default,
             "stop_grams": self.stop_grams,
+            "parents": self.parents,
             "items": self.items,
         }
         tmp = self.path.with_suffix(".tmp")
@@ -71,13 +79,15 @@ class VectorStore:
         os.replace(tmp, self.path)  # 原子替换，避免写到一半进程被杀导致库损坏
 
     # ---------- 写 ----------
-    def add_chunks(self, records: list[dict]) -> None:
+    def add_chunks(self, records: list[dict], parents: dict[str, dict] | None = None) -> None:
         existing = {item["id"] for item in self.items}
         for record in records:
             if record["id"] in existing:
                 logger.warning("重复 id，跳过：%s", record["id"])
                 continue
             self.items.append(record)
+        if parents:
+            self.parents.update(parents)
         self.save()
 
     def remove_source(self, source: str) -> int:
@@ -85,6 +95,9 @@ class VectorStore:
         self.items = [item for item in self.items if item.get("source") != source]
         removed = before - len(self.items)
         if removed:
+            # 顺带清理没人引用的父块，否则索引会随每次重新入库无限膨胀
+            alive = {item.get("parent_id") for item in self.items if item.get("parent_id")}
+            self.parents = {pid: meta for pid, meta in self.parents.items() if pid in alive}
             self.save()
         return removed
 
@@ -94,6 +107,7 @@ class VectorStore:
 
     def reset(self) -> None:
         self.items = []
+        self.parents = {}
         self.save()
 
     # ---------- 读 ----------
@@ -126,6 +140,19 @@ class VectorStore:
             return [sum(x * y for x, y in zip(query_vector, item["vector"])) for item in self.items]
         return [cosine(query_vector, item["vector"]) for item in self.items]
 
+    def rank(self, query_vector: list[float], top_n: int | None = None) -> list[tuple[int, float]]:
+        """返回 [(item 下标, 分数)]，按分数降序。
+
+        和 ``search`` 的区别：这里把下标暴露出来，混合召回要用下标去和
+        BM25 的结果（同样是下标）做 RRF 融合，光有 hit dict 对不上号。
+        """
+        if not self.items or not query_vector:
+            return []
+        n = min(top_n or config.CANDIDATE_K, len(self.items))
+        scores = self._scores(query_vector)
+        ranked = sorted(range(len(self.items)), key=lambda i: scores[i], reverse=True)[:n]
+        return [(index, scores[index]) for index in ranked]
+
     def search(self, query_vector: list[float], top_k: int | None = None) -> list[dict]:
         if not self.items or not query_vector:
             return []
@@ -142,7 +169,18 @@ class VectorStore:
                     "source": item.get("source"),
                     "page": item.get("page"),
                     "section": item.get("section"),
+                    "parent_id": item.get("parent_id"),
                     "score": round(scores[index], 4),
                 }
             )
         return hits
+
+    def get_parent(self, parent_id: str | None) -> dict | None:
+        """按 parent_id 取父块。老索引没有父块时返回 None，调用方回退到子块文本。"""
+        if not parent_id:
+            return None
+        return self.parents.get(parent_id)
+
+    def texts(self) -> list[str]:
+        """全部子块文本，供 BM25 之类的稀疏索引建库用。"""
+        return [item["text"] for item in self.items]
